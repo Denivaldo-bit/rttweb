@@ -503,6 +503,96 @@ input[type=checkbox] { accent-color:#00897B; width:14px; height:14px; cursor:poi
 .ravi-send:hover { background: #C2185B; transform: scale(1.05); }
 .ravi-send:disabled { background: #F9A8D4; cursor: not-allowed; transform: none; }
 .ravi-hint { font-size: .62rem; color: #9CA3AF; text-align: center; margin-top: 5px; }
+   /* ===== RAVI — RESPONSIVO ===== */
+      @media (max-width: 480px) {
+        #ravi-panel {
+          width: calc(100vw - 24px);
+          height: 70vh;
+          right: 12px;
+          bottom: 88px;
+        }
+
+        #ravi-fab {
+          right: 16px;
+          bottom: 20px;
+        }
+
+        #ravi-fab-tooltip {
+          right: 16px;
+          bottom: 88px;
+        }
+
+        .rm-bubble {
+          max-width: 88%;
+        }
+      }
+      /* ===== LAYOUT RESPONSIVO ===== */
+      @media (max-width: 768px) {
+        /* Esconde sidebar em mobile */
+        .sidebar {
+          display: none;
+        }
+
+        /* Topbar ocupa tela toda */
+        .topbar {
+          left: 0;
+        }
+
+        /* Conteúdo sem margem lateral */
+        .main-wrap {
+          margin-left: 0;
+        }
+
+        .page {
+          padding: 18px 16px;
+        }
+
+        /* Cards do dashboard em 2 colunas */
+        .sg {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        /* Recentes em 1 coluna */
+        .rg {
+          grid-template-columns: 1fr;
+        }
+
+        /* Modal ocupa tela toda */
+        .modal {
+          width: calc(100vw - 32px);
+        }
+
+        /* Login empilhado */
+        #v-login {
+          flex-direction: column;
+        }
+
+        .login-left {
+          padding: 40px 28px;
+          min-height: 220px;
+        }
+
+        .login-right {
+          width: 100%;
+          padding: 36px 28px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        /* Cards em 1 coluna em telas bem pequenas */
+        .sg {
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+
+        .tb {
+          flex-wrap: wrap;
+        }
+
+        .tb .sw input {
+          width: 100%;
+        }
+      }
 </style>
 </head>
 <body>
