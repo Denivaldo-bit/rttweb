@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTweb | Controle de Estoque</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px; background: #F4F6F5; color: #1A1F1E; overflow-x: hidden; }
+input, select, textarea, button { font-family: inherit; font-size: inherit; }
+#v-login, #v-app { display: none; }
+#v-login.show { display: flex; }
+#v-app.show { display: flex; }
+#v-login { flex-direction: row; min-height: 100vh; }
+.login-left { flex: 1; background: linear-gradient(160deg,#004D40,#00695C 55%,#00897B); display: flex; flex-direction: column; justify-content: flex-end; padding: 64px 56px; position: relative; overflow: hidden; }
+.login-left::before { content:''; position:absolute; top:-80px; right:-80px; width:320px; height:320px; border-radius:50%; background:rgba(255,255,255,0.05); }
+.login-left::after { content:''; position:absolute; bottom:-60px; left:-60px; width:280px; height:280px; border-radius:50%; background:rgba(0,0,0,0.07); }
+.lt { position:relative; z-index:1; color:#fff; }
+.lt h1 { font-size:2.3rem; font-weight:800; line-height:1.15; letter-spacing:-.5px; margin-bottom:14px; }
+.lt p { font-size:.98rem; opacity:.88; line-height:1.75; }
+.login-right { width:440px; background:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:52px 56px; }
+.logo-badge { width:54px; height:54px; border-radius:14px; background:linear-gradient(135deg,#00897B,#E91E8C); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:1.1rem; letter-spacing:-.5px; margin-bottom:10px; }
+.login-sub { font-size:.82rem; color:#6B7280; text-align:center; margin-bottom:34px; line-height:1.55; }
+.fg { width:100%; margin-bottom:15px; }
+.fl { display:block; font-size:.72rem; font-weight:700; color:#6B7280; text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+.fi { width:100%; padding:11px 14px; border-radius:7px; border:1.5px solid #E5E7EB; background:#FAFAFA; color:#1A1F1E; outline:none; transition:border-color .2s, background .2s; }
+.fi:focus { border-color:#00897B; background:#fff; }
+.fi.err { border-color:#E91E8C; background:#FFF5F9; }
+.ferr { display:none; color:#E91E8C; font-size:.76rem; margin-top:8px; }
+.ferr.on { display:block; }
+.btn-login { width:100%; padding:12px; background:#E91E8C; color:#fff; border:none; border-radius:7px; font-weight:700; font-size:.9rem; cursor:pointer; transition:background .2s, transform .15s; margin-top:6px; }
+.btn-login:hover { background:#C2185B; transform:translateY(-1px); }
+.forgot { text-align:center; margin-top:13px; font-size:.78rem; color:#9CA3AF; cursor:pointer; }
+.forgot:hover { color:#00897B; }
+#v-app { flex-direction: row; min-height: 100vh; }
+.sidebar { width:222px; background:#fff; border-right:1px solid #EAECEB; display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:200; flex-shrink:0; }
+.sb-logo { padding:17px 15px 14px; border-bottom:1px solid #F0F2F1; display:flex; align-items:center; gap:10px; }
+.sb-icon { width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#00897B,#E91E8C); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:.8rem; flex-shrink:0; }
+.sb-txt { font-weight:800; font-size:.93rem; letter-spacing:-.3px; }
+.sb-sub { font-size:.66rem; color:#9CA3AF; margin-top:1px; }
+.sb-nav { flex:1; padding:11px 8px; overflow-y:auto; }
+.nl { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; margin-bottom:2px; font-size:.82rem; font-weight:500; color:#6B7280; cursor:pointer; user-select:none; transition:all .14s; }
+.nl:hover { background:#F4F6F5; color:#1A1F1E; }
+.nl.on { background:#E8F5E9; color:#00695C; font-weight:700; }
+.nl svg { flex-shrink:0; }
+.nb { margin-left:auto; background:#E91E8C; color:#fff; border-radius:10px; font-size:.65rem; font-weight:700; padding:1px 6px; min-width:18px; text-align:center; }
+.sb-foot { padding:11px 8px; border-top:1px solid #F0F2F1; }
+.nl-out { color:#9CA3AF; }
+.nl-out:hover { color:#E91E8C; }
+.topbar { position:fixed; top:0; left:222px; right:0; height:52px; background:#00695C; display:flex; align-items:center; justify-content:space-between; padding:0 24px; z-index:150; }
+.tb-logo { width:28px; height:28px; border-radius:6px; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:.7rem; }
+.tb-actions { display:flex; align-items:center; gap:14px; }
+.ib { background:none; border:none; cursor:pointer; color:rgba(255,255,255,.82); padding:4px; position:relative; transition:color .15s; }
+.ib:hover { color:#fff; }
+.hb { position:absolute; top:-3px; right:-3px; background:#E91E8C; color:#fff; border-radius:50%; width:15px; height:15px; font-size:.58rem; font-weight:700; display:flex; align-items:center; justify-content:center; border:1.5px solid #00695C; }
+.main-wrap { margin-left:222px; margin-top:52px; min-height:calc(100vh - 52px); }
+.page { display:none; padding:26px 28px; animation:fadeUp .18s ease; }
+.page.on { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+.ptitle { font-size:1.3rem; font-weight:800; letter-spacing:-.3px; margin-bottom:20px; }
+.ph { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.ph .ptitle { margin:0; }
+.sg { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.sc { background:#fff; border-radius:10px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,.07); border-left:4px solid; }
+.sn { font-size:1.9rem; font-weight:800; line-height:1; margin-bottom:4px; }
+.sl { font-size:.73rem; color:#6B7280; }
+.cg { border-color:#00897B; } .cg .sn { color:#00897B; }
+.co { border-color:#FF7043; } .co .sn { color:#FF7043; }
+.cy { border-color:#FFA726; } .cy .sn { color:#FFA726; }
+.cp { border-color:#E91E8C; } .cp .sn { color:#E91E8C; }
+.cb-box { background:#fff; border-radius:10px; padding:22px; box-shadow:0 1px 3px rgba(0,0,0,.07); margin-bottom:20px; }
+.cb-lbl { font-size:.88rem; font-weight:700; margin-bottom:16px; }
+.cb-leg { display:flex; gap:18px; margin-top:10px; font-size:.73rem; color:#6B7280; }
+.cb-leg span { display:flex; align-items:center; gap:5px; }
+.dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+.rg { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.rc { background:#fff; border-radius:10px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,.07); cursor:pointer; transition:transform .14s,box-shadow .14s; }
+.rc:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.1); }
+.rn { font-size:1.55rem; font-weight:800; }
+.rbg { background:#FCE4EC; color:#E91E8C; font-size:.67rem; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-block; margin-top:3px; }
+.mb { display:flex; gap:3px; align-items:flex-end; height:36px; margin:14px 0 12px; }
+.mb div { flex:1; background:#E91E8C; border-radius:3px; opacity:.72; }
+.rnm { font-weight:700; font-size:.83rem; }
+.tb { display:flex; gap:10px; margin-bottom:16px; align-items:center; flex-wrap:wrap; }
+.sw { position:relative; }
+.sw input { padding:9px 34px 9px 12px; border-radius:8px; border:1.5px solid #E5E7EB; background:#fff; outline:none; font-size:.83rem; color:#1A1F1E; transition:border-color .2s; }
+.sw input:focus { border-color:#00897B; }
+.sw svg { position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#9CA3AF; pointer-events:none; }
+.sf { padding:9px 12px; border-radius:8px; border:1.5px solid #E5E7EB; background:#fff; font-size:.83rem; color:#6B7280; outline:none; cursor:pointer; }
+.bp { background:#E91E8C; color:#fff; border:none; border-radius:8px; padding:9px 16px; font-size:.83rem; font-weight:700; cursor:pointer; white-space:nowrap; transition:background .15s; }
+.bp:hover { background:#C2185B; }
+.bg { background:#F3F4F6; color:#6B7280; border:none; border-radius:8px; padding:9px 14px; font-size:.83rem; font-weight:500; cursor:pointer; transition:background .15s; }
+.bg:hover { background:#E5E7EB; }
+.tc { background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.07); overflow:hidden; }
+table { width:100%; border-collapse:collapse; }
+thead tr { background:#FAFAFA; border-bottom:1px solid #F0F2F1; }
+th { padding:11px 15px; text-align:left; font-size:.68rem; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:.6px; white-space:nowrap; }
+td { padding:11px 15px; font-size:.82rem; border-bottom:1px solid #F8F9FA; vertical-align:middle; }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:#FAFFFE; }
+.cbc { width:36px; }
+input[type=checkbox] { accent-color:#00897B; width:14px; height:14px; cursor:pointer; }
+.mono { font-family:'DM Mono',monospace; font-size:.76rem; color:#9CA3AF; }
+.thumb { width:34px; height:34px; border-radius:8px; background:#F0FAF9; display:flex; align-items:center; justify-content:center; font-size:1.05rem; }
+.tag { display:inline-flex; padding:3px 10px; border-radius:10px; font-size:.7rem; font-weight:600; }
+.tg { background:#E8F5E9; color:#00695C; }
+.ebtn { background:#F3F4F6; color:#6B7280; border:none; border-radius:6px; padding:5px 12px; font-size:.73rem; font-weight:500; cursor:pointer; transition:all .14s; }
+.ebtn:hover { background:#E8F5E9; color:#00695C; }
+.abtn { background:none; border:none; cursor:pointer; color:#00897B; padding:3px; transition:transform .14s; }
+.abtn:hover { transform:translateX(3px); }
+.pag { display:flex; justify-content:center; gap:5px; padding:13px; border-top:1px solid #F0F2F1; }
+.pbtn { width:30px; height:30px; border-radius:6px; border:none; background:#F3F4F6; color:#6B7280; font-size:.76rem; cursor:pointer; font-weight:500; transition:all .14s; }
+.pbtn:hover { background:#E8F5E9; color:#00695C; }
+.pbtn.on { background:#E91E8C; color:#fff; }
+.empty { text-align:center; padding:56px 20px; }
+.ei { font-size:2.8rem; opacity:.35; margin-bottom:12px; }
+.et { font-size:.88rem; color:#6B7280; }
+.el { font-size:.76rem; color:#9CA3AF; margin-top:5px; cursor:pointer; }
+.el:hover { color:#E91E8C; }
+.nu td { background:#FFFDE7 !important; }
+.ndot { width:8px; height:8px; background:#E91E8C; border-radius:50%; display:inline-block; margin-left:6px; vertical-align:middle; }
+.dp { background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.07); padding:22px; margin-bottom:18px; }
+.dt { display:flex; gap:22px; margin-bottom:20px; }
+.di { width:155px; height:125px; object-fit:cover; border-radius:10px; flex-shrink:0; }
+.df { flex:1; }
+.dn { font-size:1rem; font-weight:700; color:#00897B; margin-bottom:14px; }
+.dg { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.dlbl { font-size:.68rem; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+.din { width:100%; padding:7px 10px; border-radius:6px; border:1.5px solid #E5E7EB; font-size:.82rem; color:#1A1F1E; outline:none; background:#FAFAFA; }
+.dfoot { display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:16px; border-top:1px solid #F0F2F1; }
+.bop { background:none; border:1.5px solid #E91E8C; color:#E91E8C; border-radius:8px; padding:8px 18px; font-size:.8rem; font-weight:600; cursor:pointer; }
+.tabs { display:flex; gap:3px; background:#F3F4F6; padding:4px; border-radius:10px; width:fit-content; margin-bottom:22px; }
+.tbtn { padding:8px 18px; border:none; background:none; border-radius:8px; font-size:.8rem; font-weight:500; cursor:pointer; color:#6B7280; transition:all .14s; }
+.tbtn.on { background:#fff; color:#00695C; font-weight:700; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.tbc { display:none; }
+.tbc.on { display:block; }
+.fav { width:34px; height:34px; border-radius:50%; background:#E8F5E9; display:flex; align-items:center; justify-content:center; color:#00695C; font-weight:700; font-size:.8rem; }
+.ov { position:fixed; inset:0; background:rgba(15,20,19,.55); z-index:500; display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+.ov.on { display:flex; animation:fadeUp .15s ease; }
+.modal { background:#fff; border-radius:16px; box-shadow:0 16px 48px rgba(0,0,0,.18); width:520px; max-height:90vh; overflow-y:auto; }
+.mh { display:flex; justify-content:space-between; align-items:center; padding:20px 24px 0; }
+.mt { font-size:.98rem; font-weight:800; }
+.mc { background:none; border:none; cursor:pointer; color:#9CA3AF; font-size:1.4rem; line-height:1; }
+.mc:hover { color:#1A1F1E; }
+.mbody { padding:16px 24px 24px; }
+.frow { display:grid; gap:13px; margin-bottom:13px; }
+.frow.c2 { grid-template-columns:1fr 1fr; }
+.frow.c3 { grid-template-columns:1fr 1fr 1fr; }
+.frow label { display:block; font-size:.7rem; font-weight:700; color:#6B7280; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+.frow .fi, .frow select { width:100%; padding:9px 12px; border-radius:7px; border:1.5px solid #E5E7EB; font-size:.83rem; color:#1A1F1E; outline:none; background:#FAFAFA; }
+.mfoot { display:flex; gap:10px; padding-top:14px; }
+.mfoot .bg { flex:1; }
+.mfoot .bpm { flex:2; background:#E91E8C; color:#fff; border:none; border-radius:8px; padding:10px; font-size:.84rem; font-weight:700; cursor:pointer; }
+.mfoot .bpm:hover { background:#C2185B; }
+.cm { text-align:center; padding:32px 28px; }
+.cci { font-size:2.4rem; margin-bottom:12px; }
+.cct { font-size:.98rem; font-weight:800; margin-bottom:6px; }
+.ccm { font-size:.8rem; color:#6B7280; line-height:1.55; margin-bottom:4px; }
+.ccw { font-size:.73rem; color:#9CA3AF; margin-bottom:22px; }
+.ccb { display:flex; gap:10px; justify-content:center; }
+.bcan { background:#F3F4F6; color:#6B7280; border:none; border-radius:8px; padding:10px 24px; font-size:.83rem; font-weight:600; cursor:pointer; }
+.bdel { background:#E91E8C; color:#fff; border:none; border-radius:8px; padding:10px 24px; font-size:.83rem; font-weight:600; cursor:pointer; }
+.bok { background:#E91E8C; color:#fff; border:none; border-radius:8px; padding:10px 32px; font-size:.83rem; font-weight:600; cursor:pointer; margin-top:6px; }
+.toast { position:fixed; bottom:26px; right:26px; z-index:9999; background:#00695C; color:#fff; padding:11px 18px; border-radius:10px; font-size:.83rem; font-weight:500; box-shadow:0 8px 28px rgba(0,0,0,.18); display:none; align-items:center; gap:7px; }
+.toast.on { display:flex; animation:fadeUp .2s ease; }
+.toast.err { background:#E91E8C; }
+::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:#D1D5DB; border-radius:10px; }
+
+/* ============================================================
+   RAVI — WIDGET IA (integrado nativamente ao RTWeb)
+   ============================================================ */
+
+/* Botão flutuante */
+#ravi-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 1000;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #00897B, #E91E8C);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 28px rgba(233,30,140,0.35), 0 2px 8px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-size: 22px;
+  color: #fff;
+}
+#ravi-fab:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 12px 36px rgba(233,30,140,0.45), 0 4px 12px rgba(0,0,0,0.2);
+}
+#ravi-fab .ravi-fab-badge {
+  position: absolute;
+  top: -5px; right: -5px;
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  border: 2px solid #E91E8C;
+  display: flex; align-items: center; justify-content: center;
+}
+#ravi-fab .ravi-fab-badge::after {
+  content: '';
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #00897B;
+  animation: raviBlink 2s ease infinite;
+}
+@keyframes raviBlink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* Tooltip no FAB */
+#ravi-fab-tooltip {
+  position: fixed;
+  bottom: 96px;
+  right: 28px;
+  z-index: 999;
+  background: #1A1F1E;
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: .76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: all 0.2s;
+}
+#ravi-fab-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -5px; right: 20px;
+  width: 10px; height: 10px;
+  background: #1A1F1E;
+  transform: rotate(45deg);
+}
+#ravi-fab:hover + #ravi-fab-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Painel do chat */
+#ravi-panel {
+  position: fixed;
+  bottom: 96px;
+  right: 28px;
+  z-index: 1000;
+  width: 380px;
+  height: 560px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #EAECEB;
+  opacity: 0;
+  transform: scale(0.92) translateY(16px);
+  transform-origin: bottom right;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+#ravi-panel.open {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: all;
+}
+
+/* Header do painel */
+.ravi-header {
+  background: linear-gradient(135deg, #00695C, #004D40);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.ravi-avatar {
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #00897B, #E91E8C);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: .82rem; color: #fff;
+  flex-shrink: 0;
+  position: relative;
+}
+.ravi-avatar::after {
+  content: '';
+  position: absolute; bottom: -2px; right: -2px;
+  width: 10px; height: 10px;
+  border-radius: 50%; background: #4ade80;
+  border: 2px solid #00695C;
+  animation: raviBlink 2s ease infinite;
+}
+.ravi-header-info h3 { font-size: .88rem; font-weight: 700; color: #fff; }
+.ravi-header-info p { font-size: .7rem; color: rgba(255,255,255,0.7); margin-top:1px; }
+.ravi-header-actions { margin-left: auto; display: flex; gap: 6px; }
+.ravi-hbtn {
+  background: rgba(255,255,255,0.12);
+  border: none; color: rgba(255,255,255,0.8);
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  cursor: pointer; font-size: .9rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.ravi-hbtn:hover { background: rgba(255,255,255,0.22); color:#fff; }
+
+/* Context chips */
+.ravi-chips {
+  padding: 8px 12px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #F0F2F1;
+  display: flex; gap: 6px; flex-wrap: nowrap;
+  overflow-x: auto; flex-shrink: 0;
+}
+.ravi-chips::-webkit-scrollbar { display: none; }
+.rchip {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 100px;
+  padding: 3px 10px;
+  font-size: .7rem; font-weight: 600;
+  color: #6B7280;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.rchip:hover { background: #E8F5E9; border-color: #00897B; color: #00695C; }
+.rchip.warn { color: #D97706; border-color: #FCD34D; }
+.rchip.warn:hover { background: #FFFBEB; }
+.rchip.danger { color: #DC2626; border-color: #FCA5A5; }
+.rchip.danger:hover { background: #FEF2F2; }
+
+/* Mensagens */
+.ravi-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-behavior: smooth;
+}
+.ravi-messages::-webkit-scrollbar { width: 3px; }
+.ravi-messages::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 2px; }
+
+.rm-row {
+  display: flex; gap: 7px; align-items: flex-end;
+  animation: raviMsgIn 0.25s ease both;
+}
+.rm-row.user { flex-direction: row-reverse; }
+@keyframes raviMsgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+.rm-av {
+  width: 26px; height: 26px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 800; flex-shrink: 0;
+}
+.rm-av.r { background: linear-gradient(135deg,#00897B,#E91E8C); color:#fff; }
+.rm-av.u { background: #E91E8C; color:#fff; }
+
+.rm-bubble {
+  max-width: 78%;
+  padding: 9px 12px;
+  font-size: .8rem;
+  line-height: 1.6;
+  border-radius: 11px;
+}
+.rm-bubble.ravi {
+  background: #F0FAF9;
+  border: 1px solid #D1FAF0;
+  border-radius: 11px 11px 11px 3px;
+  color: #1A1F1E;
+}
+.rm-bubble.ravi strong { color: #00695C; }
+.rm-bubble.user {
+  background: #E91E8C;
+  color: #fff;
+  border-radius: 11px 11px 3px 11px;
+}
+.rm-time { font-size: .65rem; color: #9CA3AF; margin-top: 3px; padding: 0 2px; }
+.rm-row.user .rm-time { text-align: right; }
+
+/* Mini insight card */
+.ravi-insight {
+  background: #FFF5F9;
+  border: 1px solid #FCE4EC;
+  border-radius: 9px;
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+.ravi-insight-title {
+  font-size: .67rem; font-weight: 700;
+  color: #E91E8C; text-transform: uppercase;
+  letter-spacing: .08em; margin-bottom: 7px;
+}
+.ravi-insight-row {
+  display: flex; justify-content: space-between;
+  font-size: .76rem; padding: 4px 0;
+  border-bottom: 1px solid #FCE4EC;
+}
+.ravi-insight-row:last-child { border-bottom: none; }
+.ravi-insight-row .rn { color: #6B7280; }
+.ravi-insight-row .rv { font-weight: 700; }
+.rv.crit { color: #DC2626; }
+.rv.warn { color: #D97706; }
+.rv.ok { color: #00897B; }
+
+/* Quick replies */
+.ravi-qr { display: flex; gap: 5px; flex-wrap: wrap; padding-left: 33px; }
+.ravi-qr-btn {
+  background: #F3F4F6; border: 1px solid #E5E7EB;
+  border-radius: 100px;
+  padding: 4px 11px;
+  font-size: .72rem; font-weight: 500; color: #6B7280;
+  cursor: pointer; transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.ravi-qr-btn:hover { background: #E8F5E9; border-color: #00897B; color: #00695C; }
+
+/* Typing */
+.ravi-typing {
+  display: flex; gap: 7px; align-items: flex-end;
+  animation: raviMsgIn 0.25s ease both;
+}
+.ravi-typing-bubble {
+  background: #F0FAF9;
+  border: 1px solid #D1FAF0;
+  border-radius: 11px 11px 11px 3px;
+  padding: 10px 14px;
+  display: flex; gap: 4px; align-items: center;
+}
+.ravi-tdot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #00897B; opacity: 0.4;
+  animation: raviTyping 1.1s ease infinite;
+}
+.ravi-tdot:nth-child(2) { animation-delay: .18s; }
+.ravi-tdot:nth-child(3) { animation-delay: .36s; }
+@keyframes raviTyping { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
+
+/* Welcome state */
+.ravi-welcome {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px 20px; text-align: center;
+  gap: 10px;
+}
+.ravi-welcome-icon {
+  width: 56px; height: 56px; border-radius: 16px;
+  background: linear-gradient(135deg, #00897B, #E91E8C);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; color: #fff;
+  margin-bottom: 4px;
+  box-shadow: 0 8px 20px rgba(233,30,140,0.2);
+}
+.ravi-welcome h4 { font-size: .9rem; font-weight: 800; color: #1A1F1E; }
+.ravi-welcome p { font-size: .76rem; color: #6B7280; line-height: 1.55; max-width: 240px; }
+.ravi-welcome-chips {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  justify-content: center; margin-top: 6px;
+}
+
+/* Input */
+.ravi-input-area {
+  padding: 10px 12px 12px;
+  background: #fff;
+  border-top: 1px solid #F0F2F1;
+  flex-shrink: 0;
+}
+.ravi-input-wrap {
+  display: flex; gap: 8px; align-items: flex-end;
+  background: #F9FAFB;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 11px; padding: 8px 10px;
+  transition: border-color 0.2s;
+}
+.ravi-input-wrap:focus-within {
+  border-color: #00897B;
+  background: #fff;
+}
+.ravi-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'DM Sans', sans-serif; font-size: .8rem; color: #1A1F1E;
+  resize: none; max-height: 90px; min-height: 18px; line-height: 1.5;
+}
+.ravi-input::placeholder { color: #9CA3AF; }
+.ravi-send {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: #E91E8C; border: none; color: #fff;
+  cursor: pointer; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.ravi-send:hover { background: #C2185B; transform: scale(1.05); }
+.ravi-send:disabled { background: #F9A8D4; cursor: not-allowed; transform: none; }
+.ravi-hint { font-size: .62rem; color: #9CA3AF; text-align: center; margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<!-- ========== LOGIN ========== -->
+<div id="v-login" class="show">
+  <div class="login-left">
+    <div class="lt">
+      <h1>Para o seu negócio<br>crescer sem limites!</h1>
+      <p>Estoque organizado, negócio fluindo!<br>Conheça o RTweb, a solução<br>inteligente para sua gestão.</p>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="logo-badge">RT</div>
+    <p class="login-sub">Controle seu estoque com<br>precisão e simplicidade!</p>
+    <div class="fg"><label class="fl">Login</label><input class="fi" id="lu" type="text" placeholder="Digite seu login"></div>
+    <div class="fg"><label class="fl">Senha</label><input class="fi" id="lp" type="password" placeholder="Digite sua senha"></div>
+    <p class="ferr" id="lerr">Preencha login e senha.</p>
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <p class="forgot">Esqueci minha senha</p>
+  </div>
+</div>
+
+<!-- ========== APP ========== -->
+<div id="v-app">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-icon">RT</div>
+      <div><div class="sb-txt">RTweb</div><div class="sb-sub">Controle de Estoque</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nl on" data-p="dashboard" onclick="go('dashboard')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard
+      </div>
+      <div class="nl" data-p="estoque" onclick="go('estoque')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Gestão do estoque
+      </div>
+      <div class="nl" data-p="inventario" onclick="go('inventario')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Inventário
+      </div>
+      <div class="nl" data-p="historico" onclick="go('historico')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Histórico
+      </div>
+      <div class="nl" data-p="notificacoes" onclick="go('notificacoes')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notificações
+        <span class="nb" id="sbnb">3</span>
+      </div>
+      <div class="nl" data-p="configuracoes" onclick="go('configuracoes')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M21 12h-2M5 12H3M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M12 21v-2M12 5V3"/></svg>Configurações
+      </div>
+    </nav>
+    <div class="sb-foot">
+      <div class="nl nl-out" onclick="doLogout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sair
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="tb-logo">RT</div>
+    <div class="tb-actions">
+      <button class="ib" onclick="go('notificacoes')">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="hb" id="hdnb">3</span>
+      </button>
+      <button class="ib"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    </div>
+  </header>
+
+  <div class="main-wrap">
+    <!-- DASHBOARD -->
+    <div class="page on" id="p-dashboard">
+      <div class="ph"><h1 class="ptitle">Dashboard</h1><button class="bp" onclick="go('estoque')">Gerenciar estoque →</button></div>
+      <div class="sg">
+        <div class="sc cg"><div class="sn">127</div><div class="sl">Total de produtos</div></div>
+        <div class="sc co"><div class="sn">8</div><div class="sl">Estoque baixo</div></div>
+        <div class="sc cy"><div class="sn">3</div><div class="sl">Vencendo em 7 dias</div></div>
+        <div class="sc cp"><div class="sn">1</div><div class="sl">Vencidos</div></div>
+      </div>
+      <div class="cb-box">
+        <div class="cb-lbl">Volume por mês</div>
+        <canvas id="dashChart" height="88"></canvas>
+        <div class="cb-leg">
+          <span><span class="dot" style="background:#00897B"></span>Entradas</span>
+          <span><span class="dot" style="background:#E91E8C"></span>Saídas</span>
+        </div>
+      </div>
+      <div style="font-size:.88rem;font-weight:700;margin-bottom:14px">Alterações recentes</div>
+      <div class="rg">
+        <div class="rc" onclick="go('estoque')">
+          <div style="display:flex;justify-content:space-between"><div><div class="rn">123</div><div class="rbg">↑ 25 itens</div></div><span style="color:#9CA3AF">⋮</span></div>
+          <div class="mb" id="mb1"></div><div class="rnm">Laranjas</div>
+        </div>
+        <div class="rc" onclick="go('estoque')">
+          <div style="display:flex;justify-content:space-between"><div><div class="rn">5kg</div><div class="rbg">↑ 1 item</div></div><span style="color:#9CA3AF">⋮</span></div>
+          <div class="mb" id="mb2"></div><div class="rnm">Queijo coalho</div>
+        </div>
+        <div class="rc" onclick="go('estoque')">
+          <div style="display:flex;justify-content:space-between"><div><div class="rn">5kg</div><div class="rbg">↑ 1 item</div></div><span style="color:#9CA3AF">⋮</span></div>
+          <div class="mb" id="mb3"></div><div class="rnm">Frango c/ osso</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GESTÃO DE ESTOQUE -->
+    <div class="page" id="p-estoque">
+      <h1 class="ptitle">Gestão do estoque</h1>
+      <div class="tb">
+        <div class="sw"><input id="esq" type="text" placeholder="Procurar por um item" oninput="reE()" style="width:300px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <select class="sf" id="escat" onchange="reE()"><option value="">Tipo de produto</option><option>Carnes</option><option>Hortifruti</option><option>Laticínios</option><option>Cereais e Grãos</option><option>Bebidas</option><option>Temperos</option></select>
+        <button class="bp" onclick="openMp(null)">+ Novo</button>
+      </div>
+      <div class="tc">
+        <table><thead><tr><th class="cbc"><input type="checkbox" onclick="togAll(this,'ecb')"></th><th></th><th>Cód.</th><th>Nome</th><th>Validade</th><th>Quant.</th><th></th></tr></thead><tbody id="etb"></tbody></table>
+        <div id="eem" class="empty" style="display:none"><div class="ei">🥦</div><div class="et">Nenhum resultado encontrado.</div><div class="el" onclick="go('inventario')">Ir ao inventário</div></div>
+        <div class="pag" id="epag"></div>
+      </div>
+    </div>
+
+    <!-- INVENTÁRIO -->
+    <div class="page" id="p-inventario">
+      <h1 class="ptitle">Inventário</h1>
+      <div class="tb">
+        <div class="sw"><input id="ivq" type="text" placeholder="Procurar por um item" oninput="reI()" style="width:300px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <select class="sf" id="ivcat" onchange="reI()"><option value="">Tipo de produto</option><option>Carnes</option><option>Hortifruti</option><option>Laticínios</option><option>Cereais e Grãos</option><option>Bebidas</option><option>Temperos</option></select>
+        <button class="bp" onclick="openMp(null)">+ Novo</button>
+      </div>
+      <div id="det-panel" style="display:none">
+        <div class="dp">
+          <div class="dt">
+            <img id="det-img" src="https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=300&q=80" class="di" alt="">
+            <div class="df">
+              <div class="dn" id="det-nome">Frango c/ osso</div>
+              <div class="dg">
+                <div><div class="dlbl">Marca</div><input class="din" id="det-marca" value="Swift"></div>
+                <div><div class="dlbl">Data de compra</div><input class="din" type="date" id="det-comp"></div>
+                <div><div class="dlbl">Código</div><input class="din" id="det-cod"></div>
+                <div><div class="dlbl">Validade</div><input class="din" type="date" id="det-val"></div>
+                <div style="grid-column:1/-1"><div class="dlbl">Quantidade</div><input class="din" id="det-qtd"></div>
+              </div>
+            </div>
+          </div>
+          <div class="cb-box" style="margin-bottom:0">
+            <div class="cb-lbl">Dados de compra — Volume por mês</div>
+            <canvas id="invChart" height="76"></canvas>
+          </div>
+          <div class="dfoot">
+            <button class="bop" onclick="openConf()">Excluir item</button>
+            <button class="bp" style="width:auto;padding:8px 20px" onclick="saveDet()">Salvar alterações</button>
+          </div>
+        </div>
+      </div>
+      <div class="tc">
+        <table><thead><tr><th class="cbc"><input type="checkbox" onclick="togAll(this,'icb')"></th><th>Código</th><th>Nome</th><th>Data compra</th><th>Validade</th><th>Quant.</th><th></th></tr></thead><tbody id="itb"></tbody></table>
+        <div class="pag" id="ipag"></div>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="page" id="p-historico">
+      <h1 class="ptitle">Histórico</h1>
+      <div class="tb">
+        <div class="sw"><input id="hiq" type="text" placeholder="Procurar por um item" oninput="reH()" style="width:280px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <select class="sf"><option value="">Data inicial</option><option>01/05/2025</option><option>01/04/2025</option></select>
+        <select class="sf"><option value="">Data final</option><option>31/08/2025</option><option>31/07/2025</option></select>
+        <button class="bp" onclick="reH()">Buscar ×</button>
+      </div>
+      <div class="tc">
+        <table><thead><tr><th class="cbc"><input type="checkbox"></th><th>Log</th><th>Item</th><th>Data entrada</th><th>Validade</th><th>Quantidade</th><th>Funcionário</th><th></th></tr></thead><tbody id="htb"></tbody></table>
+        <div class="pag" id="hpag"></div>
+      </div>
+    </div>
+
+    <!-- NOTIFICAÇÕES -->
+    <div class="page" id="p-notificacoes">
+      <div class="ph"><h1 class="ptitle">Notificações</h1><button class="bg" onclick="markAll()">Marcar todas como lidas</button></div>
+      <div class="tb">
+        <div class="sw"><input id="niq" type="text" placeholder="Procurar por uma mensagem" oninput="reN()" style="width:320px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <button class="bp" id="mbtn" onclick="markAll()">Marcar todas (3)</button>
+      </div>
+      <div class="tc">
+        <table><thead><tr><th>Título</th><th style="width:110px">Data</th></tr></thead><tbody id="ntb"></tbody></table>
+        <div class="pag" id="npag"></div>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div class="page" id="p-configuracoes">
+      <h1 class="ptitle">Configurações</h1>
+      <div class="tabs">
+        <button class="tbtn on" onclick="swTab('func',this)">Funcionários</button>
+        <button class="tbtn" onclick="swTab('sis',this)">Sistema</button>
+      </div>
+      <div class="tbc on" id="tbc-func">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:13px">
+          <button class="bp" onclick="openMf(null)">+ Novo funcionário</button>
+        </div>
+        <div class="tc">
+          <table><thead><tr><th class="cbc"><input type="checkbox"></th><th></th><th>Cód.</th><th>Nome</th><th>Cargo</th><th>Data admissão</th><th></th></tr></thead><tbody id="ftb"></tbody></table>
+          <div class="pag" id="fpag"></div>
+        </div>
+      </div>
+      <div class="tbc" id="tbc-sis">
+        <div class="tc" style="max-width:500px">
+          <div style="padding:22px">
+            <div style="font-size:.88rem;font-weight:700;margin-bottom:18px">Sistema</div>
+            <div style="margin-bottom:13px"><div class="dlbl">Nome do estabelecimento</div><input class="din" value="Fora do Lar AFL"></div>
+            <div style="margin-bottom:13px"><div class="dlbl">Dias antes do vencimento para alertar</div><input class="din" type="number" value="7" style="max-width:100px"></div>
+            <div style="margin-bottom:13px"><div class="dlbl">Itens por página</div><select class="din" style="max-width:100px"><option>10</option><option>20</option><option>50</option></select></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px"><input type="checkbox" checked><label style="font-size:.82rem">Ativar alertas de estoque baixo</label></div>
+            <button class="bp" style="width:auto;padding:10px 22px" onclick="toast('Configurações salvas!')">Salvar</button>
+            <div style="margin-top:28px;padding-top:20px;border-top:1px solid #F0F2F1">
+              <div style="font-size:.88rem;font-weight:700;margin-bottom:6px;color:#E91E8C">Zona de perigo</div>
+              <div style="font-size:.76rem;color:#9CA3AF;margin-bottom:12px">Apaga todos os produtos, notificações e funcionários cadastrados e volta para os dados iniciais.</div>
+              <button class="bg" style="color:#E91E8C;border:1.5px solid #FCE4EC" onclick="resetDados()">🗑 Limpar todos os dados</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO -->
+<div class="ov" id="m-prod">
+  <div class="modal">
+    <div class="mh"><div class="mt" id="mpt">Novo Produto</div><button class="mc" onclick="cls('m-prod')">×</button></div>
+    <div class="mbody">
+      <div class="frow c2"><div><label>Código *</label><input class="fi" id="mpc"></div><div><label>Categoria</label><select class="fi" id="mpcat"><option value="">Selecione...</option><option>Carnes</option><option>Hortifruti</option><option>Laticínios</option><option>Cereais e Grãos</option><option>Bebidas</option><option>Temperos</option></select></div></div>
+      <div class="frow"><div><label>Nome *</label><input class="fi" id="mpn"></div></div>
+      <div class="frow c3"><div><label>Unidade</label><select class="fi" id="mpu"><option>unidade</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>Pacote</option><option>Caixa</option></select></div><div><label>Qtd. atual</label><input class="fi" id="mpq" type="number" value="0" min="0"></div><div><label>Qtd. mínima</label><input class="fi" id="mpqm" type="number" value="0" min="0"></div></div>
+      <div class="frow c3"><div><label>Preço R$</label><input class="fi" id="mpp" type="number" placeholder="0.00" step="0.01"></div><div><label>Data compra</label><input class="fi" id="mpcp" type="date"></div><div><label>Validade</label><input class="fi" id="mpv" type="date"></div></div>
+      <div class="mfoot"><button class="bg" onclick="cls('m-prod')">Cancelar</button><button class="bpm" onclick="saveProd()">Salvar produto</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR EXCLUSÃO -->
+<div class="ov" id="m-conf">
+  <div class="modal" style="width:360px">
+    <div class="cm"><div class="cci">⚠️</div><div class="cct">Excluir item</div><div class="ccm">Tem certeza que deseja excluir este produto?</div><div class="ccw">Esta ação não poderá ser desfeita.</div><div class="ccb"><button class="bcan" onclick="cls('m-conf')">Cancelar</button><button class="bdel" onclick="delProd()">Excluir</button></div></div>
+  </div>
+</div>
+
+<!-- MODAL SUCESSO -->
+<div class="ov" id="m-ok">
+  <div class="modal" style="width:340px">
+    <div class="cm"><div class="cci">✅</div><div class="cct" id="okt">Alterações salvas</div><div class="ccm" id="okm">Suas alterações foram salvas com sucesso.</div><button class="bok" onclick="cls('m-ok')">OK</button></div>
+  </div>
+</div>
+
+<!-- MODAL FUNCIONÁRIO -->
+<div class="ov" id="m-func">
+  <div class="modal">
+    <div class="mh"><div class="mt">Funcionário</div><button class="mc" onclick="cls('m-func')">×</button></div>
+    <div class="mbody">
+      <div class="frow c2"><div><label>Nome *</label><input class="fi" id="mfn" placeholder="Nome completo"></div><div><label>Código</label><input class="fi" id="mfc" placeholder="Ex: 0010"></div></div>
+      <div class="frow c2"><div><label>Cargo</label><select class="fi" id="mfcg"><option>Cozinheiro</option><option>Atendente</option><option>Gerente</option><option>Estoquista</option></select></div><div><label>Data admissão</label><input class="fi" type="date" id="mfa"></div></div>
+      <div class="frow c2"><div><label>Login</label><input class="fi" id="mfl" placeholder="Login"></div><div><label>Senha</label><input class="fi" type="password" id="mfp" placeholder="Senha inicial"></div></div>
+      <div class="mfoot"><button class="bg" onclick="cls('m-func')">Cancelar</button><button class="bpm" onclick="saveFunc()">Salvar</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="tst"><span id="tstm"></span></div>
+
+<!-- ============================================================
+     RAVI — WIDGET IA (aparece após login, em todas as telas)
+     ============================================================ -->
+<button id="ravi-fab" onclick="raviToggle()" style="display:none" title="Pergunte ao RAVI">
+  RA
+  <span class="ravi-fab-badge"></span>
+</button>
+<div id="ravi-fab-tooltip">✦ Perguntar ao RAVI</div>
+
+<div id="ravi-panel">
+  <!-- Header -->
+  <div class="ravi-header">
+    <div class="ravi-avatar">RA</div>
+    <div class="ravi-header-info">
+      <h3>RAVI</h3>
+      <p>● Online · Assistente RTWeb</p>
+    </div>
+    <div class="ravi-header-actions">
+      <button class="ravi-hbtn" onclick="raviClear()" title="Limpar conversa">↺</button>
+      <button class="ravi-hbtn" onclick="raviToggle()" title="Fechar">✕</button>
+    </div>
+  </div>
+
+  <!-- Context chips -->
+  <div class="ravi-chips">
+    <span class="rchip" onclick="raviQuick('Me dê um resumo do meu estoque hoje.')">📦 127 produtos</span>
+    <span class="rchip warn" onclick="raviQuick('Quais produtos estão com estoque baixo?')">⚠ 8 críticos</span>
+    <span class="rchip warn" onclick="raviQuick('Quais produtos vencem em 7 dias?')">🗓 3 vencendo</span>
+    <span class="rchip danger" onclick="raviQuick('Qual produto está vencido?')">❌ 1 vencido</span>
+  </div>
+
+  <!-- Messages -->
+  <div class="ravi-messages" id="ravi-msgs">
+    <div class="ravi-welcome" id="ravi-welcome">
+      <div class="ravi-welcome-icon">RA</div>
+      <h4>Olá! Eu sou o RAVI ✦</h4>
+      <p>Seu assistente de estoque e vendas. Como posso ajudar você agora?</p>
+      <div class="ravi-welcome-chips">
+        <span class="rchip" onclick="raviQuick('Quais produtos preciso repor com urgência?')">🚨 Urgente</span>
+        <span class="rchip" onclick="raviQuick('Quais produtos vencem esta semana?')">⏰ Validades</span>
+        <span class="rchip" onclick="raviQuick('Me dê um resumo completo do meu estoque.')">📊 Resumo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="ravi-input-area">
+    <div class="ravi-input-wrap">
+      <textarea class="ravi-input" id="ravi-input" placeholder="Pergunte sobre estoque, validades..." rows="1"
+        onkeydown="raviKey(event)" oninput="raviResize(this)"></textarea>
+      <button class="ravi-send" id="ravi-send" onclick="raviSend()">➤</button>
+    </div>
+    <div class="ravi-hint">Enter para enviar · RAVI by RTWeb</div>
+  </div>
+</div>
+
+<script>
+// ======================================================
+// RTWeb — LÓGICA ORIGINAL
+// ======================================================
+const EMJ={Carnes:'🍗',Hortifruti:'🥦','Laticínios':'🧀','Cereais e Grãos':'🌾',Bebidas:'🍺',Temperos:'🧂'};
+const emj=c=>EMJ[c]||'📦';
+const fmt=d=>{ if(!d||d==='—') return '—'; if(d.includes('/')) return d; const [y,m,dy]=d.split('-'); return `${dy}/${m}/${y}`; };
+
+const PRODS_DEFAULT=[
+  {id:1,cod:'00124',nome:'Laranjas',cat:'Hortifruti',un:'unidade',qtd:67,qmin:20,val:'2025-06-12',comp:'2025-05-01'},
+  {id:2,cod:'00034',nome:'Arroz',cat:'Cereais e Grãos',un:'Pacote',qtd:43,qmin:10,val:'2025-09-20',comp:'2025-05-01'},
+  {id:3,cod:'00033',nome:'Feijão',cat:'Cereais e Grãos',un:'Pacote',qtd:16,qmin:5,val:'2025-09-20',comp:'2025-05-01'},
+  {id:4,cod:'01436',nome:'Frango c/ osso',cat:'Carnes',un:'kg',qtd:25,qmin:10,val:'2025-12-12',comp:'2025-05-01'},
+  {id:5,cod:'01690',nome:'Cerveja Heineken Longneck',cat:'Bebidas',un:'unidade',qtd:325,qmin:50,val:'2025-11-03',comp:'2025-05-01'},
+  {id:6,cod:'01437',nome:'Peito de frango c/ osso',cat:'Carnes',un:'kg',qtd:25,qmin:10,val:'2025-12-12',comp:'2025-05-01'},
+  {id:7,cod:'01438',nome:'Sobrecoxa de frango',cat:'Carnes',un:'kg',qtd:25,qmin:10,val:'2025-12-12',comp:'2025-05-01'},
+  {id:8,cod:'01439',nome:'Peito de frango s/ osso',cat:'Carnes',un:'kg',qtd:25,qmin:10,val:'2025-12-12',comp:'2025-05-01'},
+  {id:9,cod:'01440',nome:'Sobrecoxa s/ osso',cat:'Carnes',un:'kg',qtd:25,qmin:10,val:'2025-12-12',comp:'2025-05-01'},
+  {id:10,cod:'00200',nome:'Leite integral',cat:'Laticínios',un:'L',qtd:48,qmin:12,val:'2025-06-01',comp:'2025-04-28'},
+  {id:11,cod:'00201',nome:'Queijo coalho',cat:'Laticínios',un:'kg',qtd:5,qmin:3,val:'2025-06-15',comp:'2025-05-10'},
+  {id:12,cod:'00300',nome:'Sal refinado',cat:'Temperos',un:'kg',qtd:20,qmin:5,val:'2026-01-01',comp:'2025-03-01'},
+];
+const NOTIFS_DEFAULT=[
+  {id:1,titulo:'Estoque baixo: Laranjas',msg:'O produto Laranjas está com estoque abaixo do mínimo (67 un.).',tipo:'alerta',lida:false,data:'03/03/2025'},
+  {id:2,titulo:'Vencimento próximo: Leite integral',msg:'O produto Leite integral vence em 7 dias.',tipo:'alerta',lida:false,data:'02/03/2025'},
+  {id:3,titulo:'Produto cadastrado: Feijão',msg:'O produto Feijão (00033) foi adicionado ao inventário.',tipo:'sucesso',lida:false,data:'01/03/2025'},
+  {id:4,titulo:'Estoque atualizado: Arroz',msg:'O estoque do Arroz foi atualizado pelo Gerente Demo.',tipo:'info',lida:true,data:'28/02/2025'},
+  {id:5,titulo:'Produto cadastrado: Cerveja',msg:'O produto Cerveja Heineken Longneck foi adicionado.',tipo:'sucesso',lida:true,data:'25/02/2025'},
+];
+const FUNCS_DEFAULT=[
+  {id:1,cod:'0001',nome:'Julius Rock',cargo:'Cozinheiro',adm:'12/05/2013'},
+  {id:2,cod:'0002',nome:'Maria Silva',cargo:'Atendente',adm:'03/09/2019'},
+  {id:3,cod:'0003',nome:'Carlos Souza',cargo:'Estoquista',adm:'15/11/2020'},
+  {id:4,cod:'0004',nome:'Ana Lima',cargo:'Gerente',adm:'01/03/2018'},
+  {id:5,cod:'0005',nome:'Pedro Santos',cargo:'Cozinheiro',adm:'10/06/2022'},
+];
+
+function lsGet(key,def){try{const v=localStorage.getItem('rtweb_'+key);return v?JSON.parse(v):def;}catch(e){return def;}}
+function lsSet(key,val){try{localStorage.setItem('rtweb_'+key,JSON.stringify(val));}catch(e){}}
+function salvar(){lsSet('prods',prods);lsSet('notifs',notifs);lsSet('funcs',funcs);lsSet('nxtId',nxtId);}
+
+let prods=lsGet('prods',PRODS_DEFAULT);
+let notifs=lsGet('notifs',NOTIFS_DEFAULT);
+let funcs=lsGet('funcs',FUNCS_DEFAULT);
+let nxtId=lsGet('nxtId',13);
+let hist=Array.from({length:24},(_,i)=>({log:`log${String(i+1).padStart(4,'0')}`,item:['Cerveja','Frango','Arroz'][i%3],ent:'12/05/2025',val:'12/08/2025',qtd:i%5===3?'C125 un./set':'125 unidades',func:'Wilian Siqueira'}));
+let detId=null,editId=null;
+const PP=10;
+let ep=1,ip=1,hp=1,np=1,fp=1;
+
+function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  document.getElementById('lu').classList.toggle('err',!u);
+  document.getElementById('lp').classList.toggle('err',!p);
+  const err=document.getElementById('lerr');
+  if(!u||!p){err.classList.add('on');return;}
+  err.classList.remove('on');
+  document.getElementById('v-login').classList.remove('show');
+  document.getElementById('v-app').classList.add('show');
+  // Mostra RAVI FAB após login
+  document.getElementById('ravi-fab').style.display='flex';
+  setTimeout(()=>{initDC();buildBars();reE();reI();reH();reN();reF();updB();},80);
+}
+
+function doLogout(){
+  document.getElementById('v-app').classList.remove('show');
+  document.getElementById('v-login').classList.add('show');
+  document.getElementById('lu').value='';
+  document.getElementById('lp').value='';
+  document.getElementById('ravi-fab').style.display='none';
+  document.getElementById('ravi-panel').classList.remove('open');
+}
+
+document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('lu').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('lp').focus();});
+
+function go(pg){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('p-'+pg).classList.add('on');
+  document.querySelectorAll('.nl[data-p]').forEach(l=>l.classList.toggle('on',l.dataset.p===pg));
+  if(pg==='dashboard') setTimeout(initDC,50);
+  if(pg==='inventario') document.getElementById('det-panel').style.display='none';
+}
+
+function getNL(){return notifs.filter(n=>!n.lida).length;}
+function updB(){
+  const c=getNL();
+  ['sbnb','hdnb'].forEach(id=>{const el=document.getElementById(id);el.textContent=c;el.style.display=c?'':'none';});
+  const btn=document.getElementById('mbtn');
+  if(btn)btn.textContent=`Marcar todas (${c})`;
+}
+
+let dc=null,ic=null;
+function initDC(){
+  const ctx=document.getElementById('dashChart');
+  if(!ctx)return;
+  if(dc)dc.destroy();
+  dc=new Chart(ctx,{type:'line',data:{labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set'],datasets:[{data:[85,60,75,90,55,80,70,65,72],borderColor:'#00897B',backgroundColor:'rgba(0,137,123,0.07)',borderWidth:2.5,pointRadius:0,tension:0.4,fill:true},{data:[40,55,45,60,70,50,45,55,48],borderColor:'#E91E8C',backgroundColor:'rgba(233,30,140,0.05)',borderWidth:2.5,pointRadius:0,tension:0.4,fill:true}]},options:{responsive:true,plugins:{legend:{display:false}},interaction:{mode:'index',intersect:false},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#9CA3AF'}},y:{grid:{color:'#F3F4F6'},ticks:{font:{size:11},color:'#9CA3AF'},border:{display:false}}}}});
+}
+function initIC(){
+  const ctx=document.getElementById('invChart');
+  if(!ctx)return;
+  if(ic)ic.destroy();
+  ic=new Chart(ctx,{type:'line',data:{labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set'],datasets:[{data:[30,45,35,52,40,55,38,48,44],borderColor:'#00897B',borderWidth:2,pointRadius:0,tension:0.4},{data:[18,28,22,34,30,24,32,28,36],borderColor:'#E91E8C',borderWidth:2,pointRadius:0,tension:0.4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#9CA3AF'}},y:{grid:{color:'#F3F4F6'},ticks:{font:{size:10},color:'#9CA3AF'},border:{display:false}}}}});
+}
+function buildBars(){
+  ['mb1','mb2','mb3'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.innerHTML=[55,82,40,95,62,74,46,88,65,70,52,80].map(h=>`<div style="height:${h}%"></div>`).join('');
+  });
+}
+
+function mkPag(cid,cur,total,cb){
+  const el=document.getElementById(cid);
+  if(!el)return;
+  if(total<=1){el.innerHTML='';return;}
+  el.innerHTML='';
+  [{l:'«',p:1},{l:'‹',p:Math.max(1,cur-1)},...Array.from({length:total},(_,i)=>({l:i+1,p:i+1,a:i+1===cur})),{l:'›',p:Math.min(total,cur+1)},{l:'»',p:total}].forEach(b=>{
+    const btn=document.createElement('button');
+    btn.className='pbtn'+(b.a?' on':'');
+    btn.textContent=b.l;
+    btn.onclick=()=>cb(b.p);
+    el.appendChild(btn);
+  });
+}
+function togAll(m,cls){document.querySelectorAll('.'+cls).forEach(c=>c.checked=m.checked);}
+
+function reE(){ep=1;_reE();}
+function _reE(){
+  const q=document.getElementById('esq').value.toLowerCase();
+  const cat=document.getElementById('escat').value;
+  const f=prods.filter(p=>(!q||p.nome.toLowerCase().includes(q)||p.cod.includes(q))&&(!cat||p.cat===cat));
+  const sl=f.slice((ep-1)*PP,ep*PP);
+  const em=document.getElementById('eem');
+  if(!sl.length){document.getElementById('etb').innerHTML='';em.style.display='block';}
+  else{em.style.display='none';document.getElementById('etb').innerHTML=sl.map(p=>`<tr><td class="cbc"><input type="checkbox" class="ecb"></td><td><div class="thumb">${emj(p.cat)}</div></td><td><span class="mono">${p.cod}</span></td><td style="font-weight:500">${p.nome}</td><td>${fmt(p.val)}</td><td>${p.qtd} ${p.un}</td><td><button class="ebtn" onclick="openMp(${p.id})">Editar →</button></td></tr>`).join('');}
+  mkPag('epag',ep,Math.ceil(f.length/PP),pg=>{ep=pg;_reE();});
+}
+
+function reI(){ip=1;_reI();}
+function _reI(){
+  const q=document.getElementById('ivq').value.toLowerCase();
+  const cat=document.getElementById('ivcat').value;
+  const f=prods.filter(p=>(!q||p.nome.toLowerCase().includes(q)||p.cod.includes(q))&&(!cat||p.cat===cat));
+  const sl=f.slice((ip-1)*PP,ip*PP);
+  document.getElementById('itb').innerHTML=sl.map(p=>`<tr><td class="cbc"><input type="checkbox" class="icb"></td><td><span class="mono">${p.cod}</span></td><td style="font-weight:500">${p.nome}</td><td>${fmt(p.comp)}</td><td>${fmt(p.val)}</td><td>${p.qtd} ${p.un}</td><td><button class="abtn" onclick="openDet(${p.id})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button></td></tr>`).join('');
+  mkPag('ipag',ip,Math.ceil(f.length/PP),pg=>{ip=pg;_reI();});
+}
+function openDet(id){
+  const p=prods.find(x=>x.id===id);if(!p)return;
+  detId=id;
+  document.getElementById('det-nome').textContent=p.nome;
+  document.getElementById('det-cod').value=p.cod;
+  document.getElementById('det-qtd').value=p.qtd+' '+p.un;
+  document.getElementById('det-val').value=p.val||'';
+  document.getElementById('det-comp').value=p.comp||'';
+  document.getElementById('det-panel').style.display='block';
+  document.getElementById('det-panel').scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(initIC,60);
+}
+function saveDet(){showOk('Alterações salvas','Produto atualizado com sucesso!');}
+function openConf(){opn('m-conf');}
+function delProd(){
+  if(detId)prods=prods.filter(p=>p.id!==detId);
+  salvar();cls('m-conf');
+  document.getElementById('det-panel').style.display='none';
+  reE();_reI();showOk('Item excluído','O item foi removido do inventário.');
+}
+
+function reH(){hp=1;_reH();}
+function _reH(){
+  const q=document.getElementById('hiq').value.toLowerCase();
+  const f=hist.filter(h=>!q||h.item.toLowerCase().includes(q)||h.log.includes(q));
+  const sl=f.slice((hp-1)*PP,hp*PP);
+  document.getElementById('htb').innerHTML=sl.map(h=>`<tr><td class="cbc"><input type="checkbox"></td><td><span class="mono">${h.log}</span></td><td style="font-weight:500">${h.item}</td><td>${h.ent}</td><td>${h.val}</td><td>${h.qtd}</td><td>${h.func}</td><td><button class="abtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button></td></tr>`).join('');
+  mkPag('hpag',hp,Math.ceil(f.length/PP),pg=>{hp=pg;_reH();});
+}
+
+const NI={alerta:'⚠️',sucesso:'✅',info:'ℹ️',erro:'❌'};
+function reN(){np=1;_reN();}
+function _reN(){
+  const q=document.getElementById('niq').value.toLowerCase();
+  const f=notifs.filter(n=>!q||n.titulo.toLowerCase().includes(q)||n.msg.toLowerCase().includes(q));
+  const sl=f.slice((np-1)*PP,np*PP);
+  document.getElementById('ntb').innerHTML=sl.map(n=>`<tr class="${n.lida?'':'nu'}" onclick="markOne(${n.id})" style="cursor:pointer"><td><div style="display:flex;align-items:flex-start;gap:10px"><span style="font-size:1.05rem">${NI[n.tipo]||'ℹ️'}</span><div><div style="font-weight:${n.lida?500:700};font-size:.82rem;margin-bottom:3px">${n.titulo}${!n.lida?'<span class="ndot"></span>':''}</div><div style="font-size:.75rem;color:#6B7280;line-height:1.5">${n.msg}</div></div></div></td><td style="font-size:.72rem;color:#9CA3AF;white-space:nowrap;vertical-align:top">${n.data}</td></tr>`).join('');
+  mkPag('npag',np,Math.ceil(f.length/PP),pg=>{np=pg;_reN();});
+}
+function markOne(id){const n=notifs.find(x=>x.id===id);if(n&&!n.lida){n.lida=true;salvar();_reN();updB();}}
+function markAll(){notifs.forEach(n=>n.lida=true);salvar();_reN();updB();toast('Todas as notificações marcadas como lidas!');}
+
+function reF(){fp=1;_reF();}
+function _reF(){
+  const sl=funcs.slice((fp-1)*PP,fp*PP);
+  document.getElementById('ftb').innerHTML=sl.map(f=>`<tr><td class="cbc"><input type="checkbox"></td><td><div class="fav">${f.nome[0]}</div></td><td><span class="mono">${f.cod}</span></td><td style="font-weight:600">${f.nome}</td><td><span class="tag tg">${f.cargo}</span></td><td style="font-size:.78rem;color:#6B7280">${f.adm}</td><td><button class="ebtn" onclick="openMf(${f.id})">Editar →</button></td></tr>`).join('');
+  mkPag('fpag',fp,Math.ceil(funcs.length/PP),pg=>{fp=pg;_reF();});
+}
+
+function swTab(t,btn){
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tbc').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('tbc-'+t).classList.add('on');
+}
+
+function openMp(id){
+  editId=id;
+  const p=id?prods.find(x=>x.id===id):null;
+  document.getElementById('mpt').textContent=p?`Editar: ${p.nome}`:'Novo Produto';
+  document.getElementById('mpc').value=p?p.cod:'';
+  document.getElementById('mpn').value=p?p.nome:'';
+  document.getElementById('mpq').value=p?p.qtd:0;
+  document.getElementById('mpqm').value=p?p.qmin:0;
+  document.getElementById('mpv').value=p?p.val:'';
+  document.getElementById('mpcp').value=p?p.comp:'';
+  opn('m-prod');
+}
+function saveProd(){
+  const nome=document.getElementById('mpn').value.trim();
+  const cod=document.getElementById('mpc').value.trim();
+  if(!nome||!cod){toast('Preencha código e nome.','err');return;}
+  if(editId){
+    const p=prods.find(x=>x.id===editId);
+    if(p){p.nome=nome;p.cod=cod;p.qtd=+document.getElementById('mpq').value||0;p.qmin=+document.getElementById('mpqm').value||0;p.val=document.getElementById('mpv').value;p.comp=document.getElementById('mpcp').value;p.cat=document.getElementById('mpcat').value||p.cat;}
+  }else{
+    prods.push({id:nxtId++,cod,nome,cat:document.getElementById('mpcat').value||'default',un:document.getElementById('mpu').value,qtd:+document.getElementById('mpq').value||0,qmin:+document.getElementById('mpqm').value||0,val:document.getElementById('mpv').value,comp:document.getElementById('mpcp').value});
+  }
+  cls('m-prod');reE();_reI();salvar();
+  toast(editId?'Produto atualizado!':'Produto adicionado com sucesso!');
+}
+
+function openMf(id){
+  const f=id?funcs.find(x=>x.id===id):null;
+  document.getElementById('mfn').value=f?f.nome:'';
+  document.getElementById('mfc').value=f?f.cod:'';
+  opn('m-func');
+}
+function saveFunc(){cls('m-func');salvar();toast('Funcionário salvo com sucesso!');}
+
+function opn(id){document.getElementById(id).classList.add('on');}
+function cls(id){document.getElementById(id).classList.remove('on');}
+function showOk(t,m){document.getElementById('okt').textContent=t;document.getElementById('okm').textContent=m;opn('m-ok');}
+document.querySelectorAll('.ov').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)cls(el.id);}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.ov.on').forEach(el=>cls(el.id));});
+
+function resetDados(){
+  if(!confirm('Tem certeza? Todos os dados voltarão ao padrão inicial.'))return;
+  localStorage.removeItem('rtweb_prods');localStorage.removeItem('rtweb_notifs');
+  localStorage.removeItem('rtweb_funcs');localStorage.removeItem('rtweb_nxtId');
+  location.reload();
+}
+
+let tTmr=null;
+function toast(msg,type=''){
+  const el=document.getElementById('tst');
+  document.getElementById('tstm').textContent=msg;
+  el.className='toast on'+(type?' '+type:'');
+  clearTimeout(tTmr);
+  tTmr=setTimeout(()=>el.className='toast',3200);
+}
+
+// ======================================================
+// RAVI — LÓGICA DO WIDGET IA
+// ======================================================
+const RAVI_SYSTEM = `Você é o RAVI — RTweb Assistente de Vendas & Inventário.
+Você é a inteligência artificial nativa do RTWeb, sistema de controle de estoque.
+
+ESTOQUE ATUAL:
+- 127 produtos cadastrados
+- 8 com estoque baixo (críticos)
+- 3 vencendo em 7 dias: Laranjas (67un, 12/06/2025), Feijão (16pc, 20/09/2025), Cerveja Heineken (325un, 03/11/2025)
+- 1 produto já vencido: Leite integral (01/06/2025)
+- Produtos: Laranjas, Arroz, Feijão, Frango c/osso, Cerveja Heineken, Peito de frango, Sobrecoxa, Leite integral, Queijo coalho, Sal refinado
+
+PERSONALIDADE:
+- Direto, objetivo, sem enrolação
+- Amigável como um colega experiente
+- Proativo: antecipa problemas antes de ser perguntado
+- Usa negrito (**palavra**) para destacar números e nomes
+
+REGRAS:
+- Sempre em português brasileiro
+- Respostas curtas e diretas — máximo 4 linhas
+- No máximo 1 emoji por resposta
+- Nunca diga "como IA" ou "sou apenas"
+- Sempre ofereça um próximo passo ou ação`;
+
+let raviMsgs = [];
+let raviLoading = false;
+let raviOpen = false;
+
+function raviToggle() {
+  raviOpen = !raviOpen;
+  document.getElementById('ravi-panel').classList.toggle('open', raviOpen);
+  if (raviOpen) {
+    setTimeout(() => document.getElementById('ravi-input').focus(), 250);
+  }
+}
+
+function raviKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); raviSend(); }
+}
+
+function raviResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 90) + 'px';
+}
+
+function raviTime() {
+  return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function raviScrollBottom() {
+  const m = document.getElementById('ravi-msgs');
+  m.scrollTop = m.scrollHeight;
+}
+
+function raviHideWelcome() {
+  const w = document.getElementById('ravi-welcome');
+  if (w) w.remove();
+}
+
+function raviAddMsg(role, content) {
+  raviHideWelcome();
+  const container = document.getElementById('ravi-msgs');
+  const row = document.createElement('div');
+  row.className = `rm-row${role === 'user' ? ' user' : ''}`;
+
+  const av = document.createElement('div');
+  av.className = `rm-av ${role === 'user' ? 'u' : 'r'}`;
+  av.textContent = role === 'user' ? 'EU' : 'RA';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = `display:flex;flex-direction:column;align-items:${role==='user'?'flex-end':'flex-start'}`;
+
+  const bubble = document.createElement('div');
+  bubble.className = `rm-bubble ${role === 'user' ? 'user' : 'ravi'}`;
+  bubble.innerHTML = content.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+
+  const time = document.createElement('div');
+  time.className = 'rm-time';
+  time.textContent = raviTime();
+
+  wrap.appendChild(bubble);
+  wrap.appendChild(time);
+  row.appendChild(av);
+  row.appendChild(wrap);
+  container.appendChild(row);
+  raviScrollBottom();
+}
+
+function raviAddTyping() {
+  raviHideWelcome();
+  const container = document.getElementById('ravi-msgs');
+  const row = document.createElement('div');
+  row.className = 'ravi-typing';
+  row.id = 'ravi-typing';
+  row.innerHTML = `<div class="rm-av r">RA</div><div class="ravi-typing-bubble"><div class="ravi-tdot"></div><div class="ravi-tdot"></div><div class="ravi-tdot"></div></div>`;
+  container.appendChild(row);
+  raviScrollBottom();
+}
+
+function raviRemoveTyping() {
+  const t = document.getElementById('ravi-typing');
+  if (t) t.remove();
+}
+
+function raviAddQR() {
+  const container = document.getElementById('ravi-msgs');
+  const qr = document.createElement('div');
+  qr.className = 'ravi-qr';
+  const opts = [
+    ['📦 Repor', 'Crie uma lista de reposição dos itens críticos.'],
+    ['🗓 Validades', 'Quais produtos vencem nos próximos dias?'],
+    ['📊 Relatório', 'Me dê um resumo do estoque.'],
+  ];
+  opts.forEach(([label, msg]) => {
+    const btn = document.createElement('button');
+    btn.className = 'ravi-qr-btn';
+    btn.textContent = label;
+    btn.onclick = () => { qr.remove(); raviQuick(msg); };
+    qr.appendChild(btn);
+  });
+  container.appendChild(qr);
+  raviScrollBottom();
+}
+
+async function raviSend(override) {
+  const input = document.getElementById('ravi-input');
+  const text = override || input.value.trim();
+  if (!text || raviLoading) return;
+
+  if (!override) { input.value = ''; input.style.height = 'auto'; }
+
+  raviSetLoading(true);
+  raviAddMsg('user', text);
+  raviMsgs.push({ role: 'user', content: text });
+  raviAddTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: RAVI_SYSTEM,
+        messages: raviMsgs
+      })
+    });
+    const data = await res.json();
+    raviRemoveTyping();
+    const reply = data.content?.[0]?.text || 'Não consegui processar. Tente novamente.';
+    raviMsgs.push({ role: 'assistant', content: reply });
+    raviAddMsg('assistant', reply);
+    raviAddQR();
+  } catch (e) {
+    raviRemoveTyping();
+    raviAddMsg('assistant', 'Ops! Problema de conexão. Tente novamente.');
+  }
+
+  raviSetLoading(false);
+}
+
+function raviQuick(text) {
+  if (!raviOpen) raviToggle();
+  raviSend(text);
+}
+
+function raviSetLoading(state) {
+  raviLoading = state;
+  const btn = document.getElementById('ravi-send');
+  btn.disabled = state;
+  btn.textContent = state ? '…' : '➤';
+}
+
+function raviClear() {
+  raviMsgs = [];
+  document.getElementById('ravi-msgs').innerHTML = `
+    <div class="ravi-welcome" id="ravi-welcome">
+      <div class="ravi-welcome-icon">RA</div>
+      <h4>Olá! Eu sou o RAVI ✦</h4>
+      <p>Seu assistente de estoque e vendas. Como posso ajudar?</p>
+      <div class="ravi-welcome-chips">
+        <span class="rchip" onclick="raviQuick('Quais produtos preciso repor com urgência?')">🚨 Urgente</span>
+        <span class="rchip" onclick="raviQuick('Quais produtos vencem esta semana?')">⏰ Validades</span>
+        <span class="rchip" onclick="raviQuick('Me dê um resumo completo do meu estoque.')">📊 Resumo</span>
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>
